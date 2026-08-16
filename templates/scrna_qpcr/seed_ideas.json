@@ -1,0 +1,11 @@
+[
+  {
+    "Name": "robust_multigene_qpcr_panels",
+    "Title": "Robust Multi-Gene qPCR Marker Panels for Cell-Fraction Quantification",
+    "Experiment": "Improve the current marker-panel selection strategy so that multi-gene qPCR panels provide more reliable quantitative cell-fraction estimation than the best single-marker baseline. Focus on robustness rather than only maximizing ROC AUC. Investigate marker combinations that reduce prediction error across low, medium, and high target-cell fractions while keeping the number of selected marker genes small. The method should continue to use discovery cells for marker selection and held-out cells for final evaluation. Reference genes should be used for normalization rather than as a competing classifier. Evaluate the proposed method using held-out ROC AUC, Spearman correlation between true and predicted cell fraction, MAE, RMSE, low-fraction MAE, high-fraction MAE, and marker-panel size. Compare directly against the current best-single-marker baseline and the existing greedy multi-gene baseline. Do not introduce data leakage between discovery and held-out cells.",
+    "Interestingness": 8,
+    "Feasibility": 9,
+    "Novelty": 7
+  }
+]
+

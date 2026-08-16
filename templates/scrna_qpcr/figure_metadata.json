@@ -1,0 +1,37 @@
+{
+  "umap_cell_types.png": {
+    "section": "Experimental Setup",
+    "purpose": "Visualize the dataset and the annotated cell-type populations.",
+    "run_specific": false
+  },
+  "selected_marker_expression_run_0.png": {
+    "section": "Results",
+    "purpose": "Show the expression specificity of the marker genes selected by the experimental pipeline.",
+    "run_specific": true,
+    "run": "run_0"
+  },
+  "roc_curves_run_0.png": {
+    "section": "Results",
+    "purpose": "Show held-out cell-type detection performance.",
+    "run_specific": true,
+    "run": "run_0"
+  },
+  "fraction_prediction_scatter_run_0.png": {
+    "section": "Results",
+    "purpose": "Show quantitative cell-fraction prediction performance.",
+    "run_specific": true,
+    "run": "run_0"
+  },
+  "residual_scatter_run_0.png": {
+    "section": "Results",
+    "purpose": "Show prediction errors across the tested cell-fraction range.",
+    "run_specific": true,
+    "run": "run_0"
+  },
+  "panel_vs_single_marker_run_0.png": {
+    "section": "Results",
+    "purpose": "Compare the selected multi-gene panel with the best single-marker baseline.",
+    "run_specific": true,
+    "run": "run_0"
+  }
+}

@@ -167,7 +167,18 @@ Here is the paper you are asked to review:
             except Exception as e:
                 print(f"Ensemble review {idx} failed: {e}")
         parsed_reviews = [r for r in parsed_reviews if r is not None]
-        review = get_meta_review(model, client, temperature, parsed_reviews)
+
+        if not parsed_reviews:
+            raise RuntimeError(
+                "All ensemble reviews failed JSON parsing."
+            )
+
+        review = get_meta_review(
+            model,
+            client,
+            temperature,
+            parsed_reviews,
+        )
 
         # take first valid in case meta-reviewer fails
         if review is None:
@@ -187,9 +198,21 @@ Here is the paper you are asked to review:
         ]:
             scores = []
             for r in parsed_reviews:
-                if score in r and limits[1] >= r[score] >= limits[0]:
-                    scores.append(r[score])
-            review[score] = int(round(np.mean(scores)))
+                value = r.get(score)
+
+                if (
+                    isinstance(value, (int, float))
+                    and limits[0] <= value <= limits[1]
+                ):
+                    scores.append(value)
+
+            if scores:
+                review[score] = int(round(np.mean(scores)))
+            else:
+                print(
+                    f"Warning: no valid ensemble scores found for {score}; "
+                    "keeping meta-review value."
+                )
 
         # Rewrite the message history with the valid one and new aggregated review.
         msg_history = msg_histories[0][:-1]
@@ -223,7 +246,7 @@ REVIEW JSON:
         for j in range(num_reflections - 1):
             # print(f"Relection: {j + 2}/{num_reflections}")
             text, msg_history = get_response_from_llm(
-                reviewer_reflection_prompt,
+                reviewer_reflection_prompt.format(current_round=j + 2,num_reflections=num_reflections,),
                 client=client,
                 model=model,
                 system_message=reviewer_system_prompt,

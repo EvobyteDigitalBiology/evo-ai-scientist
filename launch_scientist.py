@@ -233,32 +233,22 @@ def do_idea(
             print(f"Experiments failed for idea {idea_name}")
             return False
 
-        with open(notes, "a") as f:
-            for run_name in sorted(os.listdir(folder_name)):
-                if not run_name.startswith("run_") or run_name == "run_0":
-                    continue
-
-                result_path = osp.join(folder_name, run_name, "final_info.json")
-
-                if not osp.exists(result_path):
-                    continue
-
-                try:
-                    with open(result_path, "r") as rf:
-                        run_results = json.load(rf)
-
-                    f.write(f"\n## {run_name}: Experimental Results\n")
-                    f.write(json.dumps(run_results, indent=2))
-                    f.write("\n")
-                except Exception as e:
-                    print(f"Could not add {run_name} results to notes: {e}")
+        
 
         print_time()
         print(f"*Starting Writeup*")
         ## PERFORM WRITEUP
         if writeup == "latex":
             writeup_file = osp.join(folder_name, "latex", "template.tex")
-            fnames = [exp_file, writeup_file, notes, vis_file]
+            fnames = [writeup_file, notes, exp_file]
+            writeup_io = InputOutput(
+                yes=True,
+                chat_history_file=(
+                    f"{folder_name}/"
+                    f"{idea_name}_writeup_aider.txt"
+                ),
+            )
+
             if model == "deepseek-coder-v2-0724":
                 main_model = Model("deepseek/deepseek-coder")
             elif model == "deepseek-reasoner":
@@ -270,7 +260,7 @@ def do_idea(
             coder = Coder.create(
                 main_model=main_model,
                 fnames=fnames,
-                io=io,
+                io=writeup_io,
                 stream=False,
                 use_git=False,
                 edit_format="diff",
@@ -352,14 +342,22 @@ def do_idea(
             log.close()
 
 
-if __name__ == "__main__":
+def main():
     args = parse_arguments()
 
     # Check available GPUs and adjust parallel processes if necessary
     available_gpus = get_available_gpus(args.gpus)
+    if not available_gpus and args.parallel > 0:
+        print(
+            "Warning: parallel execution was requested, "
+            "but no GPUs are available. Falling back to sequential execution."
+        )
+        args.parallel = 0
     if args.parallel > len(available_gpus):
         print(
-            f"Warning: Requested {args.parallel} parallel processes, but only {len(available_gpus)} GPUs available. Adjusting to {len(available_gpus)}."
+            f"Warning: Requested {args.parallel} parallel processes, "
+            f"but only {len(available_gpus)} GPUs available. "
+            f"Adjusting to {len(available_gpus)}."
         )
         args.parallel = len(available_gpus)
 
@@ -374,6 +372,7 @@ if __name__ == "__main__":
 
     base_dir = osp.join("templates", args.experiment)
     results_dir = osp.join("results", args.experiment)
+
     ideas = generate_ideas(
         base_dir,
         client=client,
@@ -382,6 +381,7 @@ if __name__ == "__main__":
         max_num_generations=args.num_ideas,
         num_reflections=NUM_REFLECTIONS,
     )
+
     if not args.skip_novelty_check:
         ideas = check_idea_novelty(
             ideas,
@@ -394,69 +394,92 @@ if __name__ == "__main__":
     with open(osp.join(base_dir, "ideas.json"), "w") as f:
         json.dump(ideas, f, indent=4)
 
-    novel_ideas = [idea for idea in ideas if idea["novel"]]
+    novel_ideas = [
+        idea
+        for idea in ideas
+        if idea.get("novel", False)
+    ]
 
-print(
-    f"Generated {len(ideas)} ideas, "
-    f"{len(novel_ideas)} were marked novel."
-)
-# novel_ideas = list(reversed(novel_ideas))
+    print(
+        f"Generated {len(ideas)} ideas, "
+        f"{len(novel_ideas)} were marked novel."
+    )
 
-if args.parallel > 0:
-    print(f"Running {args.parallel} parallel processes")
-    queue = multiprocessing.Queue()
-    for idea in novel_ideas:
-        queue.put(idea)
+    if args.parallel > 0:
+        print(f"Running {args.parallel} parallel processes")
 
-    processes = []
-    for i in range(args.parallel):
-        gpu_id = available_gpus[i % len(available_gpus)]
-        p = multiprocessing.Process(
-            target=worker,
-            args=(
-                queue,
-                base_dir,
-                results_dir,
-                args.model,
-                client,
-                client_model,
-                args.writeup,
-                args.improvement,
-                gpu_id,
-                args,
-            ),
-        )
-        p.start()
-        time.sleep(150)
-        processes.append(p)
+        queue = multiprocessing.Queue()
 
-    # Signal workers to exit
-    for _ in range(args.parallel):
-        queue.put(None)
+        for idea in novel_ideas:
+            queue.put(idea)
 
-    for p in processes:
-        p.join()
+        processes = []
 
-    print("All parallel processes completed.")
-else:
-    for idea in novel_ideas:
-        print(f"Processing idea: {idea['Name']}")
-        try:
-            success = do_idea(
-                base_dir,
-                results_dir,
-                idea,
-                args.model,
-                client,
-                client_model,
-                args.writeup,
-                args.improvement,
-                args,
+        for i in range(args.parallel):
+            gpu_id = available_gpus[i % len(available_gpus)]
+
+            p = multiprocessing.Process(
+                target=worker,
+                args=(
+                    queue,
+                    base_dir,
+                    results_dir,
+                    args.model,
+                    client,
+                    client_model,
+                    args.writeup,
+                    args.improvement,
+                    gpu_id,
+                    args,
+                ),
             )
-            print(f"Completed idea: {idea['Name']}, Success: {success}")
-        except Exception as e:
-            print(f"Failed to evaluate idea {idea['Name']}: {str(e)}")
-            import traceback
-            print(traceback.format_exc())
 
-print("All ideas evaluated.")
+            p.start()
+            time.sleep(150)
+            processes.append(p)
+
+        # Signal workers to exit
+        for _ in range(args.parallel):
+            queue.put(None)
+
+        for p in processes:
+            p.join()
+
+        print("All parallel processes completed.")
+
+    else:
+        for idea in novel_ideas:
+            print(f"Processing idea: {idea['Name']}")
+
+            try:
+                success = do_idea(
+                    base_dir,
+                    results_dir,
+                    idea,
+                    args.model,
+                    client,
+                    client_model,
+                    args.writeup,
+                    args.improvement,
+                    args,
+                )
+
+                print(
+                    f"Completed idea: {idea['Name']}, "
+                    f"Success: {success}"
+                )
+
+            except Exception as e:
+                print(
+                    f"Failed to evaluate idea "
+                    f"{idea['Name']}: {str(e)}"
+                )
+
+                import traceback
+                print(traceback.format_exc())
+
+    print("All ideas evaluated.")
+
+
+if __name__ == "__main__":
+    main()

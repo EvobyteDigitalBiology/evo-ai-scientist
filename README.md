@@ -127,6 +127,10 @@ For example, the single-cell/qPCR template turns annotated single-cell expressio
 
 The template uses a qPCR-style normalization proxy rather than claiming to model physical Ct measurements directly, because its input is an expression matrix. This distinction is kept explicit in the experiment implementation.
 
+#### Data used for qPCR Assay development
+
+The data consist of 3k PBMCs from a Healthy Donor and are freely available from 10x Genomics (here from this webpage[https://support.10xgenomics.com/single-cell-gene-expression/datasets/1.1.0/pbmc3k]). The dataset contained the relevant cell type annotations for qPCR assay development.
+
 
 ## Introduction
 We provide three templates, which were used in our paper, covering the following domains: ****NanoGPT****, ****2D Diffusion****, and ****Grokking****. These templates enable The AI Scientist to generate ideas and conduct experiments in these areas. We accept contributions of new templates from the community, but please note that they are not maintained by us. All other templates beyond the three provided are community contributions.

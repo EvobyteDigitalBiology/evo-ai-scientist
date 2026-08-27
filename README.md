@@ -99,7 +99,7 @@ The work in this fork focuses on making the autonomous experiment-to-paper pipel
 ### Changes in the Evobyte fork
 
 Compared with the upstream implementation, this fork includes the following pipeline changes:
-
+- **Expanded LLM support.** The LLM client has been extended to support additional models, including OpenAI GPT-5.6 Sol.
 - **Stricter experiment execution.** Scientific changes are expected to be implemented directly in `experiment.py`; run directory names are treated as output locations rather than a mechanism for changing experimental behavior.
 - **Experiment-output validation.** Successful runs are required to produce a valid `run_i/final_info.json`, and missing or malformed outputs are treated as experiment failures that must be repaired.
 - **Change detection before execution.** The experiment loop checks that the coding agent actually modified the experiment before launching a new run, reducing accidental duplicate runs.
@@ -129,11 +129,11 @@ The template uses a qPCR-style normalization proxy rather than claiming to model
 
 #### Data used for qPCR Assay development
 
-The data consist of 3k PBMCs from a Healthy Donor and are freely available from 10x Genomics (here from this webpage[https://support.10xgenomics.com/single-cell-gene-expression/datasets/1.1.0/pbmc3k]). The dataset contained the relevant cell type annotations for qPCR assay development.
+The data consist of 3k PBMCs from a Healthy Donor and are freely available from 10x Genomics (here from this[10x Genomics](https://support.10xgenomics.com/single-cell-gene-expression/datasets/1.1.0/pbmc3k). The dataset contained the relevant cell type annotations for qPCR assay development.
 
 
 ## Introduction
-We provide three templates, which were used in our paper, covering the following domains: ****NanoGPT****, ****2D Diffusion****, and ****Grokking****. These templates enable The AI Scientist to generate ideas and conduct experiments in these areas. We accept contributions of new templates from the community, but please note that they are not maintained by us. All other templates beyond the three provided are community contributions.
+We provide the three original templates used in the AI Scientist paper, covering **NanoGPT**, **2D Diffusion**, and **Grokking**. This Evobyte fork additionally includes a **single-cell/qPCR assay development template**, extending the AI Scientist workflow to computational biology and qPCR marker-panel development. We also accept contributions of new templates from the community, but these are not necessarily maintained by us.
 
 ## Requirements
 This code is designed to run on Linux with NVIDIA GPUs using CUDA and PyTorch. Support for other GPU architectures may be possible by following the [PyTorch guidelines](https://pytorch.org/get-started/locally/). The current templates would likely take an infeasible amount of time on CPU-only machines. Running on other operating systems may require significant adjustments.
